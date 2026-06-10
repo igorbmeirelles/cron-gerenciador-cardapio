@@ -1,25 +1,44 @@
-// check-site.js
-const { chromium } = require("playwright");
+const http = require("http");
+const { createClient } = require("@supabase/supabase-js");
+const dotenv = require("dotenv");
 
-async function run() {
-  const browser = await chromium.launch({
-    headless: true,
-  });
+dotenv.config();
 
-  const page = await browser.newPage();
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+);
 
-  try {
-    await page.goto("https://gerenciador-cardapio.vercel.app/", {
-      waitUntil: "networkidle",
-      timeout: 30000,
-    });
+async function keepAlive() {
+  const { error } = await supabase.from("Alimento").select("id").limit(1);
 
-    console.log(`[${new Date().toISOString()}] Site acessado com sucesso`);
-  } catch (err) {
-    console.error(`[${new Date().toISOString()}] Erro:`, err.message);
-  } finally {
-    await browser.close();
+  if (error) {
+    console.error(error);
+  } else {
+    console.log("Supabase acessado com sucesso");
   }
 }
 
-run();
+const server = http.createServer(async (req, res) => {
+  if (req.method === "GET" && req.url === "/") {
+    try {
+      await keepAlive();
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("OK");
+    } catch (err) {
+      console.error(err);
+      res.writeHead(500, { "Content-Type": "text/plain" });
+      res.end("Internal Server Error");
+    }
+  } else {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not Found");
+  }
+});
+
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
+
+
