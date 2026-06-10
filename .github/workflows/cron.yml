@@ -1,8 +1,9 @@
 name: Visit Site
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: '*/5 * * * *'
 
 jobs:
   visit:
@@ -16,5 +17,7 @@ jobs:
           node-version: 20
 
       - run: npm install
-      - run: npx playwright install --with-deps
+
+      - run: npx playwright install --with-deps chromium
+
       - run: node check-site.js
