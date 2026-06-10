@@ -1,7 +1,6 @@
 name: Visit Site
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '*/5 * * * *'
 
